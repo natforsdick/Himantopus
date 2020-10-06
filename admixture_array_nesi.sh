@@ -13,6 +13,7 @@
 #SBATCH --output admix_DATE.%j.out # CHANGE number for new run
 #SBATCH --error admix_DATE.%j.err #  CHANGE number for new run
 
+# To run admixture for investigating species delimitation, population structuring, and introgression.
 # Make directories for the outputs
 mkdir /nesi/nobackup/PROJECT_ID/natalie/admixture_${SLURM_ARRAY_TASK_ID}
 cd /nesi/nobackup/PROJECT_ID/natalie/admixture_${SLURM_ARRAY_TASK_ID}
@@ -27,6 +28,6 @@ do
 # Run admixture. -C = designate termination criteria, --cv = 10-fold cross-validation. 
 # -s = seed, -j = number of threads (multithreaded mode).
 $admixture -C 0.0001 --cv=10 ../INPUT_FILE.bed $k \
--s time -j24 | tee log_FILE_NAME_${k}.out 
+-s time -j24 | tee log_OUTPUT_FILE_NAME_${k}.out 
 
 done
