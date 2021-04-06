@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #SBATCH -A PROJECT_ID
-#SBATCH -J admixv1
+#SBATCH -J admix
 #SBATCH --time 1:00:00 #
 #SBATCH -N 1
 #SBATCH -c 36
@@ -8,15 +8,15 @@
 #SBATCH --mem=5GB
 #SBATCH --array=1-10
 #SBATCH --partition=large
-#SBATCH --mail-user=natalie.forsdick@postgrad.otago.ac.nz
+#SBATCH --mail-user=USER_EMAIL
 #SBATCH --mail-type=ALL
 #SBATCH --output admix_DATE.%j.out # CHANGE number for new run
 #SBATCH --error admix_DATE.%j.err #  CHANGE number for new run
 
 # To run admixture for investigating species delimitation, population structuring, and introgression.
 # Make directories for the outputs
-mkdir /nesi/nobackup/PROJECT_ID/natalie/admixture_${SLURM_ARRAY_TASK_ID}
-cd /nesi/nobackup/PROJECT_ID/natalie/admixture_${SLURM_ARRAY_TASK_ID}
+mkdir /nesi/nobackup/PROJECT_ID/admixture_${SLURM_ARRAY_TASK_ID}
+cd /nesi/nobackup/PROJECT_ID/admixture_${SLURM_ARRAY_TASK_ID}
 
 # Call admixture program
 admixture=/nesi/nobackup/PROJECT_ID/bin/admixture_linux-1.3.0/admixture ## to update
