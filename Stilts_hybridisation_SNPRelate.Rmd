@@ -1,0 +1,336 @@
+---
+title: "SNPRelate analysis of stilts"
+author: "Nat Forsdick"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+# Introduction
+
+This report is supplementary to the manuscript by Forsdick, Martini, Brown, Cross, Maloney, Steeves, Knapp, entitled 'Genomic sequencing confirms absence of introgression despite past hybridisation between a common and a critically endangered bird'. The original Rmarkdown file used to produce this report is available at https://github.com/natforsdick/Himantopus.
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(echo = TRUE,ppi=600,units="in", fig.height=5, fig.width=7)
+
+```
+
+```{r install_packages, include=F, eval=F}
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("gdsfmt")
+BiocManager::install("SNPRelate")
+BiocManager::install("MASS")
+install.packages("pals")
+```
+
+## Session Information 
+
+```{r libraries, echo=F}
+library(gdsfmt)
+library(SNPRelate)
+library(MASS)
+library(RColorBrewer)
+library("Manu")
+library(pals)
+library('gridExtra')
+
+sessionInfo()
+
+citation("gdsfmt")
+citation("SNPRelate")
+citation("MASS")
+```
+
+```{r colours,include=F}
+Kereru <- get_pal("Kereru")
+palette(Kereru)
+# Create a gradient of colours between the selected colours
+#selected_colours <- get_pal("Titipounamu")[c(2,4,6,1)]
+selected_colours <- get_pal("Kereru")[c(3,5)]
+color.gradient <- function(x, colors=selected_colours, colsteps=100) {
+  return( colorRampPalette(colors) (colsteps) [ findInterval(x,
+                seq(min(x),max(x), length.out=colsteps)) ] )
+}
+x <- c((1:100)^2)
+```
+
+Here we use the SNPRelate package (citation provided in 'Session Information' above) implemented in `r R.version.string` to assess clustering as an alternative approach to DAPC, using the filtered SNP set with all individuals as input ('Forsdick_et_al_Filtered_SNP_set.vcf'). We also generate plots of relatedness within populations, and Fst estimates between populations. The analyses here closely follow the tutorial provided for SNPRelate (https://bioconductor.org/packages/release/bioc/vignettes/SNPRelate/inst/doc/SNPRelate.html). 
+
+```{r import_vcfs,include=F}
+vcf.fn <- "./Forsdick_et_al_Filtered_SNP_set.vcf"
+snpgdsVCF2GDS(vcf.fn, "test.gds", method="biallelic.only")
+snpgdsSummary("test.gds")
+```
+
+```{r sanity_check,include=F}
+# Open the GDS file
+genofile <- snpgdsOpen("test.gds")
+
+head(genofile)
+```
+
+```{r get_pop,include=F}
+# Get population information
+pop_code <- scan("./SNPset2_SNPRelate.txt",
+                 what=character())
+table(pop_code)
+
+# Display the first six values
+head(pop_code)
+
+# Get sample id
+sample.id <- read.gdsn(index.gdsn(genofile, "sample.id"))
+
+# assume the order of sample IDs is as the same as population codes
+head(cbind(sample.id, pop_code))
+```
+
+```{r PCA,echo=F}
+population <- as.factor(pop_code)
+pca <- snpgdsPCA(genofile, num.thread=4,autosome.only=F)
+
+# variance proportion (%)
+pc.percent <- pca$varprop*100
+head(round(pc.percent, 2))
+
+# Make the data frame
+tab <- data.frame(sample.id = pca$sample.id,
+    pop = factor(pop_code)[match(pca$sample.id, sample.id)],
+    EV1 = pca$eigenvect[,1],    # the first eigenvector
+    EV2 = pca$eigenvect[,2],    # the second eigenvector
+    stringsAsFactors = FALSE)
+head(tab)
+
+lbls <- paste("PC", 1:2, "\n", format(pc.percent[1:2], 
+                                      digits=2), "%", sep="")
+pairs(pca$eigenvect[,1:2], col=tab$pop, labels=lbls)
+```
+
+```{r PCA1,echo=F, eval=F}
+# Draw first 4 PCs
+
+plot(tab$EV2, tab$EV1, col=as.integer(tab$pop), 
+     xlab="eigenvector 2", ylab="eigenvector 1")
+legend("bottomright", legend=levels(tab$pop), 
+       pch="o", col=1:nlevels(tab$pop))
+
+lbls <- paste("PC", 1:4, "\n", format(pc.percent[1:4], 
+                                      digits=2), "%", sep="")
+pairs(pca$eigenvect[,1:4], col=tab$pop, labels=lbls)
+```
+
+
+
+```{r top_PCs,echo=F, eval=F}
+#Parallel coordinates plot for the top principal components:
+datpop <- factor(pop_code)[match(pca$sample.id, sample.id)]
+parcoord(pca$eigenvect[,1:16], col=datpop)
+```
+
+
+```{r get_corr,eval=F, echo=F}
+#To calculate the SNP correlations between eigenvectors and SNP genotypes:
+
+palette(alphabet2())
+# Get chromosome index
+chr <- read.gdsn(index.gdsn(genofile, "snp.chromosome"))
+CORR <- snpgdsPCACorr(pca, genofile, eig.which=1:4)
+
+savepar <- par(mfrow=c(2,1), mai=c(0.45, 0.55, 0.1, 0.25))
+
+for (i in 1:2)
+{
+    plot(abs(CORR$snpcorr[i,]), ylim=c(0,1), xlab="",
+         ylab=paste("PC", i),
+         col=1:length(chr), pch="+")
+}
+```
+
+## Estimating Fst
+
+Here we calculate Fst using the Weir and Cockerham method. First we consider kakī, pied stilts, and hybrids as three distinct units (although they represent two distinct species and intermediate hybrids). The first value represents the weighted Fst estimate, the second is the mean Fst estimate. 
+
+```{r fst,echo=F}
+# Two populations: HCB and JPT
+flag <- pop_code %in% c("K", "P", "H")
+samp.sel <- sample.id[flag]
+pop.sel <- pop_code[flag]
+v <- snpgdsFst(genofile, sample.id=samp.sel, population=as.factor(pop.sel),
+    method="W&C84", autosome.only=F)
+
+# Weir and Cockerham weighted Fst estimate
+v$Fst 
+# Weir and Cockerham mean Fst estimate
+v$MeanFst    
+summary(v$FstSNP)
+```
+
+Next we only consider kakī and pied stilts. We expect this value to align with our previous estimates produced with VCFTools, as in Table 3 of the main manuscript, where mean Fst = 0.622, and weighted mean Fst = 0.637. 
+
+```{r fst2,echo=F}
+# Two populations: HCB and JPT
+flag <- pop_code %in% c("K", "P")
+samp.sel <- sample.id[flag]
+pop.sel <- pop_code[flag]
+v <- snpgdsFst(genofile, sample.id=samp.sel, population=as.factor(pop.sel),
+    method="W&C84", autosome.only=F)
+
+# Weir and Cockerham weighted Fst estimate
+v$Fst 
+# Weir and Cockerham mean Fst estimate
+v$MeanFst    
+summary(v$FstSNP)
+```
+
+## Relatedness
+
+Now we can look at relatedness metrics. First we are considering Identity-By-Descent, using PLINK method of moment analysis. 
+
+```{r K_relatedness,include=F,eval=F}
+K.id <- sample.id[pop_code == "K"]
+ibd <- snpgdsIBDMoM(genofile, sample.id=K.id,
+    maf=0.05, missing.rate=0.05, num.thread=4, autosome.only=F)
+
+ibd.coeff <- snpgdsIBDSelection(ibd)
+head(ibd.coeff)
+
+plot(ibd.coeff$k0, ibd.coeff$k1, xlim=c(0,1), ylim=c(0,1),
+    xlab="k0", ylab="k1", main="Kakī samples (MoM)")
+lines(c(0,1), c(1,0), col="red", lty=2)
+```
+
+
+```{r P_relatedness,include=F,eval=F}
+P.id <- sample.id[pop_code == "P"]
+ibd <- snpgdsIBDMoM(genofile, sample.id=P.id,
+    maf=0.05, missing.rate=0.05, num.thread=4, autosome.only=F)
+
+ibd.coeff <- snpgdsIBDSelection(ibd)
+head(ibd.coeff)
+
+plot(ibd.coeff$k0, ibd.coeff$k1, xlim=c(0,1), ylim=c(0,1),
+    xlab="k0", ylab="k1", main="P samples (MoM)")
+lines(c(0,1), c(1,0), col="red", lty=2)
+```
+
+First we calculate for kakī:
+
+```{r K_relatedness_nofilt,echo=F}
+K.id <- sample.id[pop_code == "K"]
+ibd <- snpgdsIBDMoM(genofile, sample.id=K.id,
+     num.thread=4, autosome.only=F)
+
+ibd.coeff <- snpgdsIBDSelection(ibd)
+head(ibd.coeff)
+
+plot(ibd.coeff$k0, ibd.coeff$k1, xlim=c(0,1), ylim=c(0,1),
+    xlab="k0", ylab="k1", main="Kaki samples (MoM)")
+lines(c(0,1), c(1,0), col="red", lty=2)
+```
+
+And then for hybrids:
+
+```{r H_relatedness_nofilt,echo=F}
+H.id <- sample.id[pop_code == "H"]
+ibd <- snpgdsIBDMoM(genofile, sample.id=H.id,
+     num.thread=4, autosome.only=F)
+
+ibd.coeff <- snpgdsIBDSelection(ibd)
+head(ibd.coeff)
+
+plot(ibd.coeff$k0, ibd.coeff$k1, xlim=c(0,1), ylim=c(0,1),
+    xlab="k0", ylab="k1", main="Hybrid samples (MoM)")
+lines(c(0,1), c(1,0), col="red", lty=2)
+```
+
+And then for pied stilts: 
+
+```{r SR_relatedness_nofilt,echo=F}
+P.id <- sample.id[pop_code == "P"]
+ibd <- snpgdsIBDMoM(genofile, sample.id=P.id,
+    num.thread=4, autosome.only=F)
+
+ibd.coeff <- snpgdsIBDSelection(ibd)
+head(ibd.coeff)
+
+plot(ibd.coeff$k0, ibd.coeff$k1, xlim=c(0,1), ylim=c(0,1),
+    xlab="k0", ylab="k1", main="Pied stilts samples (MoM)")
+lines(c(0,1), c(1,0), col="red", lty=2)
+```
+
+We can also consider all individuals together:
+
+```{r all_relatedness_nofilt,echo=F}
+ibd <- snpgdsIBDMoM(genofile, sample.id=sample.id,
+    num.thread=4, autosome.only=F)
+
+ibd.coeff <- snpgdsIBDSelection(ibd)
+head(ibd.coeff)
+
+plot(ibd.coeff$k0, ibd.coeff$k1, xlim=c(0,1), ylim=c(0,1),
+    xlab="k0", ylab="k1", main="All samples (MoM)")
+lines(c(0,1), c(1,0), col="red", lty=2)
+```
+
+Then we can look at identity-by-state:
+
+```{r Identity-by-state,echo=F}
+ibs <- snpgdsIBS(genofile, num.thread=2, autosome.only=F)
+
+pop.idx <- order(pop_code)
+
+image(ibs$ibs[pop.idx, pop.idx], col=color.gradient(x))
+#image(ibs$ibs[pop.idx, pop.idx], col=terrain.colors(16))
+```
+
+This is more difficult to interpret because individuals are not perfectly clustered by population in the input files.
+
+## Additional clustering analysis
+
+We can also perform multidimensional scaling analysis on the n × n matrix of genome-wide IBS pairwise distances:
+
+```{r mdsa,echo=F}
+palette(Kereru)
+loc <- cmdscale(1 - ibs$ibs, k = 2)
+x <- loc[, 1]; y <- loc[, 2]
+popn <- as.factor(pop_code)
+
+plot(x, y, col=popn, xlab = "", ylab = "",
+    main = "Multidimensional Scaling Analysis (IBS)")
+legend("topleft", legend=levels(popn), pch="o", text.col=1:nlevels(popn))
+```
+
+To perform cluster analysis on the n × n matrix of genome-wide IBS pairwise distances, and determine the groups by a permutation score:
+
+```{r cluster, fig.height=6, fig.width=13, echo=F}
+set.seed(100)
+ibs.hc <- snpgdsHCluster(snpgdsIBS(genofile,
+                                   num.thread=2,autosome.only = F))
+
+# Determine groups of individuals automatically
+rv <- snpgdsCutTree(ibs.hc)
+
+#plot(rv$dendrogram, leaflab="none", main="HapMap Phase II")
+
+table(rv$samp.group)
+
+# Determine groups of individuals by population information
+rv2 <- snpgdsCutTree(ibs.hc, samp.group=as.factor(pop_code))
+
+table(rv2$samp.group)
+
+plot(rv2$dendrogram, leaflab="none", main="HapMap Phase II")
+legend("topleft", legend=levels(popn), col=1:nlevels(popn), 
+       pch=19, ncol=4)
+```
+
+```{r close, echo=F}
+# Close the GDS file
+snpgdsClose(genofile)
+```
+
+# Conclusions
+
+The PCA results appear concordant to those of DAPC, where kakī and pied stilts are grouped distinctly from one another, with hybrids falling intermediate to the two. The Fst estimates indicate strong differentiation between kakī and pied stilts. When hybrids are included, the differentiation is still strong but less so, as we would expect. 
+
+The clustering analysis represented in the 'HapMap Phase II' plot again shows kakī and pied stilts to cluster distinctly, with a handful of hybrids grouping with each of these two groups. Overall, we interpret these results as concordant with thos of DAPC and ADMIXTURE analyses, providing further support for our conclusion that despite a history of hybridisation, there has been no substantial admixture of poaka genetic material into the kakī genome.
