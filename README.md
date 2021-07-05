@@ -12,4 +12,6 @@ _Streamlined_GBS_pipeline.md_ describes a straightforward analysis pipeline for 
 
 _admixture_array_nesi.sh_ is a SLURM script to run ADMIXTURE, with ten iterations for each value of K from 1 - 10 processed as an array. 
 
+_pophelper-analysis.Rmd_ is an Rmarkdown script to merge and visualise the results of multiple iterations of ADMIXTURE analysis. 
+
 _Forsdick-et-al_Stilts_SNPRelate.Rmd_ includes the methods used to perform population clustering, and estimation of relatedness and Fst using the R package SNPRelate. The results of this analysis are appended as Supplementary File 1 in Forsdick et al. (_In review_).
