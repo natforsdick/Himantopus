@@ -31,7 +31,9 @@ Requirements:
 * Tab-delimited TXT file containing two columns, the firstcontaining the barcode sequence and the second containing the respective sample file name to output (barcodes.txt).
 
 e.g.:
+
 ACCATCG indiv1.fastq
+
 ACTAGCC indiv2.fastq
 
 ## Demultiplexing
