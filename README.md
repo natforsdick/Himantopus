@@ -1,9 +1,9 @@
 ## Himantopus
-Scripts related to Forsdick (2020), 'Assessment of the impacts of anthropogenic hybridisation in a threatened non-model bird species through the development of genomic resources with implications for conservation,' PhD thesis associated with hybridisation between kakī (*Himantopus novaezelandiae*) and poaka (*Himantopus himantopus leucocephalus*). Thesis permanent link: http://hdl.handle.net/10523/10268.
+Scripts related to Forsdick (2020), 'Assessment of the impacts of anthropogenic hybridisation in a threatened non-model bird species through the development of genomic resources with implications for conservation,' PhD thesis associated with interspecific hybridisation between kakī (*Himantopus novaezelandiae*) and poaka (*Himantopus himantopus leucocephalus*). Thesis permanent link: http://hdl.handle.net/10523/10268.
 
-Additional associated publications:
-- Galla, Forsdick et al. (2019). Reference Genomes from Distantly Related Species Can Be Used for Discovery of Single Nucleotide Polymorphisms to Inform Conservation Management. _Genes_, 10(1), 9.  https://doi.org/10.3390/genes10010009
-- Forsdick et al. (_In review_). Genomic sequencing confirms absence of introgression despite past hybridisation between a common and a critically endangered bird. Available as a BioRxiv preprint at https://doi.org/10.1101/2020.09.28.316299. 
+Associated peer-reviewed publications:
+- Galla, Forsdick et al. (2019). Reference Genomes from Distantly Related Species Can Be Used for Discovery of Single Nucleotide Polymorphisms to Inform Conservation Management. _Genes_, 10(1), 9.  https://doi.org/10.3390/genes10010009.
+- Forsdick et al. (2021).Genomic sequencing confirms absence of introgression despite past hybridisation between a critically endangered bird and its common congener. _Global Ecology and Conservation_, 28, e01681. https://doi.org/10.1016/j.gecco.2021.e01681. 
 
 # Files
 _Raw_read_QC_trim.sh_ is a script for performing quality control for short-read whole genome sequencing data. It uses FastQC to assess raw read quality, Trimmomatic for adapter removal, and ConDeTri for quality trimming and read deduplication.
