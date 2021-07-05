@@ -1,0 +1,278 @@
+---
+title: "PopHelper analysis of ADMIXTURE results"
+author: "Natalie J Forsdick"
+date: "10/2/2019"
+header-includes:
+    - \usepackage{setspace}\doublespacing
+output:
+  pdf_document:
+    keep_md: true
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = '{SET INDIR}',echo = FALSE, ppi=300, units = 'in')
+rm(list = ls(all.names = TRUE))
+```
+
+```{r packages, include=FALSE}
+# Commented code is what had to be set up initially to load pophelper:
+#remove.packages('ggplot2')
+#install devtools package from CRAN
+#install.packages('devtools',dependencies=T)
+#library(devtools) # may need to run this but will check first
+
+#install pophelper package from GitHub:
+#install_github('royfrancis/pophelper', force=TRUE)
+
+#load library for use
+library('pophelper')
+packageDescription("pophelper", fields="Version")
+#library(RColorBrewer)
+library(tidyr)
+```
+
+```{r colours, include=FALSE}
+# Set colours for plots
+greenbluegrey <- c("#6F808C", "#70CFAE", "#29AB7D","#CECECE", "#32D199","#28B0D1","#143A8B",  "#F0A156", "#5B88C1","#C05E23", "#99B5DC", "#F7B969")
+```
+
+Here we use the `R` package `PopHelper` to plot the outputs of ADMIXTURE for analysis of introgression between stilt species (*Himantopus* spp.), as in Chapter 4, [Forsdick, 2020](https://ourarchive.otago.ac.nz/handle/10523/10268), published as [Forsdick et al., 2021](https://doi.org/10.1016/j.gecco.2021.e01681). The variant set was filtered to exclude indels and non-biallelic SNPs, loci with > 10% missing data, minor allele frequency set to 0.01, minimum quality of 20, minimum mean depth of 5X. Individuals with > 50% missing data were excluded, and loci on sex chromosomes were removed, as described in [Forsdick et al., 2021](https://doi.org/10.1016/j.gecco.2021.e01681). This Rmarkdown process follows on from the analysis in 'Streamlined_GBS_pipeline.md', and closely follows the steps described in <http://www.royfrancis.com/pophelper/articles/index.html>.
+
+Prior to importing our data, we have to do some pre-processing to ensure iteration numbers are appended to file names, and that all *Q* files are in the same directory. We also want to extract our CVs so we can identify the most appropriate *k*-values. This pre-processing uses the command line and is described in Step 7 of 'Streamlined_GBS_pipeline.md'.
+
+## Assess CV to determine the most appropriate number of clusters
+
+This requires all CVs to be extracted and sorted by *k*, in a single file `admixture_CV_sorted.txt`. 
+
+```{r CV_values, echo = FALSE}
+# Import data file
+cvfile <- read.table(file="/path/to/admixture_CV_sorted.txt",header= FALSE, sep= " ", stringsAsFactors = FALSE)
+
+head(cvfile)
+
+# Here we change k so it's a proper number to plot
+cvfile$V3[cvfile$V3 %in% "(K=1):"] <- "1"
+cvfile$V3[cvfile$V3 %in% "(K=2):"] <- "2"
+cvfile$V3[cvfile$V3 %in% "(K=3):"] <- "3"
+cvfile$V3[cvfile$V3 %in% "(K=4):"] <- "4"
+cvfile$V3[cvfile$V3 %in% "(K=5):"] <- "5"
+cvfile$V3[cvfile$V3 %in% "(K=6):"] <- "6"
+cvfile$V3[cvfile$V3 %in% "(K=7):"] <- "7"
+cvfile$V3[cvfile$V3 %in% "(K=8):"] <- "8"
+cvfile$V3[cvfile$V3 %in% "(K=9):"] <- "9"
+cvfile$V3[cvfile$V3 %in% "(K=10):"] <- "10"
+
+# Check that this appended correctly
+head(cvfile)
+```
+
+```{r CV_values_means, echo = FALSE}
+# To generate group-specific means we can use aggregate function
+cvfile_means <- aggregate(cvfile[,4], list(cvfile$V3), mean)
+cvfile_means
+```
+
+```{r CV_values_plot, fig.height=4, fig.width=6, echo = FALSE}
+# Then there seems no simple way to append this to cvfile, so manually add the means generated above.
+means <- c(LIST-OF-MEANS-FROM-AGGREGATE-FUNCTION)
+
+# Then plot of CV by k.
+png('cv_plot_filt.png')
+
+cv.plot <- plot(cvfile$V3, cvfile$V4, 
+                bty="l", xlab="K", ylab="CV error", 
+                pch=19, cex.lab=1.5, cex.axis=1.2, ylim=c(0,0.4), col="#CECECE75") 
+# Here you can specify level of transparency using hex code.
+
+# Then we add our means to indicate our best k
+cv.plot <- lines(means, lwd = 2, pch = 19, type = "b", col="#208561")
+
+# Add legend
+cv.plot <-  legend("bottomright", 
+                        legend = c("Mean CV error","Raw CV error"), 
+                        col = c("#208561","#CECECE"),
+                        pch = c(19), 
+                        bty = "n", 
+                        pt.cex = 1.2, 
+                        cex = 1.2, 
+                        text.col = "black", 
+                        horiz = F)
+dev.off()
+```
+
+
+Now we can identify our most appropriate *K* value using this plot.
+
+Next we can import our *Q* files to `PopHelper`, and begin plotting.
+First, make a list of files to include.
+
+```{r make_Qlist}
+q1<- list.files(path="./admixture_filt_Q", pattern = c(".Q"), full.names=T)
+
+# Check files are correct:
+#head(q1)
+```
+
+Create a list
+
+```{r make_Qlist2}
+alist <- readQ(files=q1, indlabfromfile=T)
+is.qlist(alist)
+```
+
+We need a txt file containing the population information for individuals 'admix_filt_indiv.txt'. 
+
+```{r confirm_Qlist2}
+# Had some issues later with k or ind labels not set properly, so using this to try and solve that problem.
+q2 <- as.qlist(alist)
+#head(q2)
+is.qlist(q2)
+
+threelabset <- read.delim("./admix_filt_indiv.txt", header=F, stringsAsFactors=F)
+#head(threelabset)
+
+# Tabulate Q files, and make a table
+tr1 <- tabulateQ(q2, writetable=F)
+#tr1
+# Summarise Q files, collapsing replicate runs
+sr1 <- summariseQ(tr1)
+#head(sr1)
+
+#summariseQ(tr1, writetable=TRUE)
+```
+
+Next create an initial unaligned plot, just to check that everything imported and is running as expected.
+
+```{r test_plot, eval=FALSE, fig.height=10, fig.width=6, include=FALSE}
+p1 <- plotQ(q2[c(1:10)], imgoutput="join", returnplot=T, exportplot=T, outputfilename="test_plot", imgtype="png", quiet=T, basesize=11)
+
+p1
+```
+
+Now let's compare the first ten runs for *K* = 2. Here you have to select the correct run so you get the same *K* value.
+
+```{r group_lab_plot1, eval=FALSE, fig.height=10, fig.width=10, include=FALSE}
+plotQ(q2[c(3,13,23,33,43,53,63,73,83,93)], imgoutput="join", returnplot=T, exportplot=T, outputfilename="group_lab_plot1", imgtype="png", quiet=T, basesize=11,
+             showindlab=F, grplab=threelabset, ordergrp=T, showlegend=T, clustercol=greenbluegrey, height=1)#,
+
+```
+
+Next up, test out aligning the data. 
+
+```{r align_plot, eval=FALSE, fig.height=20, fig.width=8, include=FALSE}
+alist1 <- alignK(q2[c(3,13,23,33,43,53,63,73,83,93)])
+plotQ(alist1, imgoutput="join", returnplot=T, exportplot=T, quiet=T, outputfilename="align_plot1", imgtype="png", basesize=12, clustercol=greenbluegrey, showtitle = F, barbordersize = 0, legendpos = 'left', showindlab = F)
+
+```
+
+Then sort by group, which should make any patterns much clearer.
+
+```{r align_plot2, eval=FALSE, fig.height=11, fig.width=8, include=FALSE}
+plotQ(alist1, imgoutput="join", returnplot=T, showindlab=F, grplab=threelabset, exportplot=T, outputfilename="align_plot2", imgtype="png", quiet=T, basesize=12, splabsize=6,
+      subsetgrp=c("kakī","hybrid","pied"), selgrp="V1",
+      ordergrp=T, showlegend=T, grplabangle = 45, grplabsize = 2,
+      clustercol=greenbluegrey,
+      height=1)
+```
+
+Now this works for a set with the same *K* value - what happens if we do it for all data?
+
+```{r align_all, fig.height=16, fig.width=8, echo = FALSE}
+alist2 <- alignK(q2)
+```
+
+
+```{r align_all2, eval=FALSE, fig.height=11, fig.width=8, include=FALSE}
+plotQ(alist2, imgoutput="join", returnplot=T, showindlab=F, grplab=threelabset, exportplot=T, outputfilename="align_all2", imgtype="png", quiet=T, basesize=12,
+      clustercol=greenbluegrey,
+      height=1, indlabsize=2, indlabheight=0.08, indlabspacer=-1)
+```
+
+```{r mergeQ, include=FALSE}
+alist_merged <- mergeQ(alist2) 
+as.qlist(alist_merged)
+```
+
+Here we use predefined populations to group the data - replace K, H, P with your own population/sex/colour groups as appropriate. 
+
+```{r merge_plot2, fig.height=5, fig.width=10, echo = FALSE}
+plotQ(alist_merged, imgoutput="join", returnplot=T,
+      grplab=threelabset, subsetgrp=c("K","H","P"), selgrp="V1", ordergrp=T,
+      showindlab = F,
+      showlegend=F, exportplot=T, outputfilename="merge_plot2", imgtype="png", quiet=T, basesize=8, 
+      grplabangle = 0, grplabsize = 1.4, splabsize = 3, divtype = 1, divsize = 0.2, panelspacer = 0.06, grplabspacer = -0.2, linesize = 0.3,
+      grplabheight = 0.2, splab = c("K = 1","K = 2","K = 3","K = 4","K = 5","K = 6","K = 7", "K = 8", "K = 9", "K = 10"),
+             barbordercolour="white", barbordersize=0.01, clustercol=greenbluegrey, height=1, dpi=500)
+
+```
+
+We then convert to CLUMPP format. 
+
+```{r clumpp_output, eval=FALSE, include=FALSE}
+clumppExport(qlist=q2, prefix="Admix_filt", useexe=T)
+```
+
+Ran these through CLUMPP (not shown here). This should provide support for the most appropriate *K* value determined above. Example results:
+
+K = 2
+In total, 100 configurations of runs and clusters will be tested.
+
+Running... 
+----------------------------------
+Best estimate of H'  Repeat number (of 100)
+0.999999012177041    1
+0.999999012177044    2
+0.999999012177046    46
+
+Results 
+----------------------------------
+The highest value of H' is: 0.999999012177046
+
+VS: K = 3
+
+In total, 100 configurations of runs and clusters will be tested.
+
+Running... 
+----------------------------------
+Best estimate of H'  Repeat number (of 100)
+0.784182008243604    1
+0.784556874132706    2
+0.784556874132708    3
+
+Results 
+----------------------------------
+The highest value of H' is: 0.784556874132708
+
+
+If required, you can plot your merged files for comparison. 
+
+```{r clumpp_results, echo=FALSE, fig.height=5, fig.width=10}
+aligned <- readQ("./Admix_filt_K2-combined-aligned.txt")
+```
+
+```{r clumpp_aligned_plot, echo=FALSE, fig.height=20, fig.width=10}
+plotQ(aligned, imgoutput="join", grplab=threelabset, subsetgrp=c("K","H","P"), selgrp="V1", ordergrp=T, clustercol=greenbluegrey)
+```
+```{r clumpp_merged, echo=FALSE}
+merged2 <- readQ("./Admix_filt_K2-combined-merged.txt")
+merged3 <- readQ("./Admix_filt_K3-combined-merged.txt")
+
+```
+
+```{r clumpp_merged_plot, echo=FALSE, fig.height=5, fig.width=10}
+plotQ(merged2, grplab=threelabset,subsetgrp=c("K","H","P"), selgrp="V1", ordergrp=T,
+      showindlab = F,
+      showlegend=F, exportplot=T, outputfilename="CLUMPP_merged_k2",imgtype="png", quiet=T, basesize=8, 
+      grplabangle = 0, grplabsize = 1.4, splabsize = 3, divtype = 1, divsize = 0.2, panelspacer = 0.06, grplabspacer = -0.2, linesize = 0.3,
+      grplabheight = 0.2, 
+             barbordercolour="white", barbordersize=0.01, clustercol=greenbluegrey, height=4, dpi=500)
+
+plotQ(merged3, grplab=threelabset, subsetgrp=c("K","H","P"), selgrp="V1", ordergrp=T,
+      showindlab = F,
+      showlegend=F, exportplot=T, outputfilename="CLUMPP_merged_k3", imgtype="png", quiet=T, basesize=8, 
+      grplabangle = 0, grplabsize = 1.4, splabsize = 3, divtype = 1, divsize = 0.2, panelspacer = 0.06, grplabspacer = -0.2, linesize = 0.3,
+      grplabheight = 0.2, 
+             barbordercolour="white", barbordersize=0.01, clustercol=greenbluegrey, height=4, dpi=500)
+```
+
