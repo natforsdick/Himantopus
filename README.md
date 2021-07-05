@@ -8,7 +8,7 @@ Additional associated publications:
 # Files
 _Raw_read_QC_trim.sh_ is a script for performing quality control for short-read whole genome sequencing data. It uses FastQC to assess raw read quality, Trimmomatic for adapter removal, and ConDeTri for quality trimming and read deduplication.
 
-_Streamlined_GBS_pipeline.txt_ describes a straightforward analysis pipeline for GBS data including demultiplexing, mapping, variant discovery and filtering, and additional pre-processing prior to analysis with ADMIXTURE and/or adegenet.
+_Streamlined_GBS_pipeline.md_ describes a straightforward analysis pipeline for GBS data including demultiplexing, mapping, variant discovery and filtering, and additional pre-processing prior to analysis with ADMIXTURE and/or adegenet.
 
 _admixture_array_nesi.sh_ is a SLURM script to run ADMIXTURE, with ten iterations for each value of K from 1 - 10 processed as an array. 
 
