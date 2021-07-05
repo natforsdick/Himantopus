@@ -2,11 +2,11 @@
 
 ### Natalie J Forsdick, 05 July 2021
 
-The following pipeline was produced as part of work carried out for my PhD thesis (Chapter 3, [Forsdick, 2020](#references)) to conduct analysis of introgression between kakī (*Himantopus novaezelandiae*) and pied stilts (*H. himantopus leucocephalus*) using Genotyping By Sequencing (GBS) data as input. This research has since been published as [Forsdick et al., 2021](#references). I gratefully acknowledge my co-authors Liz Brown, Denise Martini, Hugh Cross, Richard Maloney, Tammy Steeves, and Michael Knapp.
+The following pipeline was produced as part of work carried out for my PhD thesis (Chapter 3, [Forsdick, 2020](https://ourarchive.otago.ac.nz/handle/10523/10268)) to conduct analysis of introgression between kakī (*Himantopus novaezelandiae*) and pied stilts (*H. himantopus leucocephalus*) using Genotyping By Sequencing (GBS) data as input. This research has since been published as [Forsdick et al., 2021](https://doi.org/10.1016/j.gecco.2021.e01681). I gratefully acknowledge my co-authors Liz Brown, Denise Martini, Hugh Cross, Richard Maloney, Tammy Steeves, and Michael Knapp. 
 
 This pipeline uses command-line bash commands to take raw GBS data for multiple individuals through analysis of introgression resulting from hybridisation, with additional analysis and visualisation of results with the `Pophelper` package in `R v3.5.1`. The steps included here should be run independently of one another. Variables should be modified according to the project-specific directories and names of input and output files, and available software versions. 
 
-# Software requirements
+## Software requirements
 Updated versions of software can be used, as long as this is done so consistently. Versions listed below are those used to process stilt data and are specified here for reproducibility.
 
 * `Sabre v1.0`
@@ -17,9 +17,6 @@ Updated versions of software can be used, as long as this is done so consistentl
 * `VCFtools v0.1.15`
 * `PLINK v1.9`
 * `ADMIXTURE v1.3`
-
-# R package requirements
-
 
 # 1. Demultiplexing, filtering and trimming raw data
 
@@ -40,7 +37,7 @@ ACTAGCC indiv2.fastq
 ## Demultiplexing
 
 
-### Script name: GBS_preprocessing.sh    
+Script name: GBS_preprocessing.sh    
 
 To run: 
 
@@ -50,7 +47,7 @@ To run:
   /path/to/adapters.fa
 ```
 
-### GBS_preprocessing.sh script:
+GBS_preprocessing.sh script:
 
 
 ```bash
@@ -58,14 +55,9 @@ To run:
 
   # Check for arguments/help
   if [ "$1" == "help" ]; then
-	    printf "\n This is a script to demultiplex, filter, and trim raw GBS data using 
-	    sabre and cutadapt \n\n"
-	    printf "Three arguments are needed: the path to the FASTQ file containing raw 
-	    GBS data,\n a the path to the tab-delimited text file containing sample 
-	    barcodes and output file names,\n and the path to a FASTA file containing 
-	    adapter sequences for removal."
-	    printf "For example:\n\t ./GBS_preprocessing.sh /path/to/datafile.fq 
-	    /path/to/barcodes.txt /path/to/adapters.fa \n "
+	    printf "\n This is a script to demultiplex, filter, and trim raw GBS data using sabre and cutadapt \n\n"
+	    printf "Three arguments are needed: the path to the FASTQ file containing raw GBS data,\n a the path to the tab-delimited text file containing sample barcodes and output file names,\n and the path to a FASTA file containing adapter sequences for removal."
+	    printf "For example:\n\t ./GBS_preprocessing.sh /path/to/datafile.fq /path/to/barcodes.txt /path/to/adapters.fa \n "
 	    exit 1
 
   elif [ "$1" != "" ]; then
@@ -123,17 +115,15 @@ To run:
 
 Next we filter out data that does not contain the correct enzyme restriction site.
 
-### Script name: GBS_filtering.sh
+Script name: GBS_filtering.sh
 
 To run: 
-
 
 ```bash
   bash GBS_filtering.sh 
 ```
 
-### GBS_filtering.sh script:
-
+GBS_filtering.sh script:
 
 ```bash
 echo "Filtering and trimming with cutadapt"
@@ -198,9 +188,9 @@ This ends Step 1. All output files should be inspected for errors or anomalies b
 
 # 2. Sequence mapping
 
-Here we map the processed sequence reads to the reference genome of the focal species, so we can confidently call high-quality SNPs downstream. For this research, we mapped reads to the kakī reference genome ([Galla et al., 2019](#references)).
+Here we map the processed sequence reads to the reference genome of the focal species, so we can confidently call high-quality SNPs downstream. For this research, we mapped reads to the kakī reference genome ([Galla et al., 2019](https://doi.org/10.3390/genes10010009)).
 
-### Script name: GBS_mapping.sh
+Script name: GBS_mapping.sh
 
 The original mapping script is reproduced on GitHub as `simple_mapping_loop.sh`.
 
@@ -212,15 +202,13 @@ This requires two arguments to run:
 
 To run: 
 
-
 ```bash
 # Before running the script, you must move into the directory containing the FASTQ files.
 cd /path/to/FASTQs/
 bash GBS_mapping.sh /path/to/fqlist.txt /path/to/REFERENCE.fasta
 ```
 
-### GBS_mapping.sh script:
-
+GBS_mapping.sh script:
 
 ```bash
 #!/bin/bash -e
@@ -231,12 +219,9 @@ module load samtools/1.9 bwa/0.7.17
 
 # Check for arguments/help
 if [ "$1" == "help" ]; then
-	    printf "\n This is a script to map multiple sequence files to a single reference 
-	    using BWA \n"
-	    printf "Two arguments are needed: a text file with a list of fq files to map,\n 
-	    and the reference sequence to map against \n"
-	    printf "For example: \n\t ./simpler_mapping_loop.sh SEQUENCE_LIST 
-	    /path/to/ref/REFERENCE.fasta \n\n"
+	    printf "\n This is a script to map multiple sequence files to a single reference using BWA \n"
+	    printf "Two arguments are needed: a text file with a list of fq files to map,\n and the reference sequence to map against \n"
+	    printf "For example: \n\t ./simpler_mapping_loop.sh SEQUENCE_LIST /path/to/ref/REFERENCE.fasta \n\n"
 	    exit 1
 
 elif [ "$1" != "" ]; then
@@ -306,7 +291,6 @@ done
 
 Step 2 is complete. Logfiles containing mapping reports should be inspected before proceeding to Step 3. 
 
-
 # 3. Variant discovery
 
 The next phase is variant discovery. Here we use the `STACKS` reference-guided pipeline for variant discovery. 
@@ -316,7 +300,7 @@ Requirements:
 * A tab-delimited text file containing a list of sample files and their associated population of origin (ref_population.txt)
 * The reference genome as used in Step 2. 
 
-## Script name: STACKS_varcalling.sh
+Script name: STACKS_varcalling.sh
 
 To run:
 
@@ -325,21 +309,15 @@ bash STACKS_varcalling.sh /path/to/processed/samples/ /path/to/reference/ \
   /path/to/ref_population.txt
 ```
 
-## STACKS_varcalling.sh script:
-
+STACKS_varcalling.sh script:
 
 ```bash
 #!/bin/bash -e
 
 if [ "$1" == "help" ]; then
-	    printf "\n This is a script to call variants for a set of processed sample files 
-	    using STACKS \n"
-	    printf "Three arguments are needed: the path to the directory containing the 
-	    processed sample files,\n the path to the reference genome, \n and the 
-	    ref_population.txt file \n"
-	    printf "For example: \n\t
-	    ./STACKS_varcalling.sh /path/to/processed/samples/ 
-	    /path/to/output/directory/ /path/to/ref_population.txt \n\n"
+	    printf "\n This is a script to call variants for a set of processed sample files using STACKS \n"
+	    printf "Three arguments are needed: the path to the directory containing the processed sample files,\n the path to the reference genome, \n and the ref_population.txt file \n"
+	    printf "For example: \n\t ./STACKS_varcalling.sh /path/to/processed/samples/ /path/to/output/directory/ /path/to/ref_population.txt \n\n"
 	    exit 1
 
 elif [ "$1" != "" ]; then
@@ -385,7 +363,6 @@ This requires output results to be considered step-by-step so filtering can be a
 
 Throughout, we are specifying our input VCF with the `--vcf` flag, and a name for the output with the `--out` flag. Filtering steps and the resultant outputs should be carefully tracked. 
 
-
 ```bash
 # Setting up environment variables
 module load vcftools/0.1.15
@@ -397,7 +374,6 @@ module load vcftools/0.1.15
 ```
 
 First let's find out how many variants were produced from the `STACKS` pipeline.
-
 
 ```bash
 grep "^[^#;]" variants.vcf | wc -l
@@ -442,7 +418,6 @@ less out.imiss
 
 We can visualise the distribution of missing data per individual.
 
-
 ```bash
 mawk '!/IN/' out.imiss | cut -f5 > totalmissing
 gnuplot << \EOF 
@@ -462,7 +437,6 @@ EOF
 
 We want to tailor individual filtering to suit the distribution of the data, but removing individuals with > 50% missing data is probably a good way to start. Let's make a list of those individuals with >5 0% missing data and remove them from the set.
 
-
 ```bash
 mawk '$5 > 0.5' out.imiss | cut -f1 > lowDP.indv
 
@@ -474,7 +448,6 @@ At this point further exploratory analysis of the SNP set should be conducted - 
 
 The following is just an example, filtering on a minimum minor allele frequency of 0.01, retaining SNPs with depth between 5 - 200, and a minimum site quality of 20.
 
-
 ```bash
 vcftools --vcf filt_variants3.recode.vcf --maf 0.01 \
   --minDP 5 --maxDP 200 --minQ 20 --remove-filtered-all --recode \
@@ -484,7 +457,6 @@ grep "^[^#;]" /path/to/filt_variants4.recode.vcf | wc -l
 ```
 
 We also want to remove loci on the sex chromosomes, to avoid problems associated with sex-linked or haploid loci. These data could be assessed independently, or with tools that can appropriately incorporate haploid sites, depending on the question at hand. 
-
 
 ```bash
 vcftools --vcf filt_variants4.recode.vcf \
@@ -500,14 +472,13 @@ This completes Step 4. We should now have a good understanding of our SNP set, a
 
 Here we need to convert the VCF file to be passed as input to `ADMIXTURE` (or other analyses pipelines as required), using `STACKS` and `PLINK.` We also run the following code line-by-line on the command line.
 
-## Requirements: 
-
-We need to create a new populations file specifying the source population of all individuals (negfree_ref_population.txt), ensuring that filtered individuals are removed. 
-
 This process using `STACKS` produces useful estimates for population-level metrics including mean individuals per site, heterozygosity, population-specific variants/polymorphic sites, and private alleles.
 
 The output `PLINK` format files are then passed to `PLINK` for conversion to BED, BIM, and FAM files that will be passed as input to `ADMIXTURE`.
 
+## Requirements: 
+
+We need to create a new populations file specifying the source population of all individuals (negfree_ref_population.txt), ensuring that filtered individuals are removed. 
 
 ```bash
 # Set up the environmental variables
@@ -526,7 +497,6 @@ Following conversion, the BIM file requires modification before passing to `ADMI
 
 If in addition to using `ADMIXTURE` we want to investigate population clustering with `ADEGENET` in `R`, we need to convert those same `PLINK` files to produce a RAW format file. 
 
-
 ```bash
 plink --file filt_variants3_lowDPrem_SexChromrem.recode.plink --aec --recode A 
 ```
@@ -541,21 +511,19 @@ While all previous steps can be run simply on a standard computer, `ADMIXTURE` a
 
 Biologically appropriate values of *k* should be assessed. In the following example, we test for the presence of up to ten clusters. A test subset of the data implementing a single run with the highest value of *k* may be useful to determine computational resource requirements for the target data set. 
 
-### Script name: admixture.sl
+Script name: admixture.sl
 
 This requires the output files from conversion (BED, BIM, and FAM) to be present in the directory. The original is reproduced as on GitHub as `admixture_array_nesi.sl`.
 
 To run:
 
-
 ```bash
 sbatch admixture.sl  
 ```
 
-### admixture.sl script:
+admixture.sl script:
 
 The `SBATCH --array` flag can be modified to run various numbers simultaneously, e.g., --array 1-20%100 will run batches of 20 iterations simultaneously until all 100 iterations are completed.
-
 
 ```bash
 #!/bin/bash -e
@@ -609,7 +577,6 @@ Step 6 is completed. Barring errors or further adjustments, we can now proceed t
 
 First, we want to ensure that all the outputs are individually named, so that when we move these files, they don't get overwritten. *Q* files are renamed based on the run number. `ls` is used to check that the renaming is correct before replacing this with `mv` to rename the files. *k* values should be altered as above.
 
-
 ```bash
 for k in {1..10}
 do
@@ -632,9 +599,7 @@ do
 done
 ```
 
-
 We then want to extract the CV values to determine the appropriate number of clusters. We pull out CV values and sorted by the cluster number.
-
 
 ```bash
 grep "^CV" admixture_*.out | sort -k 3 > admixture_CV_sorted.txt
@@ -644,7 +609,7 @@ This is the end of Step 7. These files can then be transferred to the local syst
 
 # References
 
-Forsdick, Natalie J., Denise Martini, Liz Brown, Hugh B. Cross, Richard F. Maloney, Tammy E. Steeves, and Michael Knapp. 2021. “Genomic Sequencing Confirms Absence of Introgression Despite Past Hybridisation Between a Critically Endangered Bird and Its Common Congener.” Global Ecology and Conservation 28: e01681. <https://doi.org/https://doi.org/10.1016/j.gecco.2021.e01681>.
+Forsdick, Natalie J., Denise Martini, Liz Brown, Hugh B. Cross, Richard F. Maloney, Tammy E. Steeves, and Michael Knapp. 2021. “Genomic Sequencing Confirms Absence of Introgression Despite Past Hybridisation Between a Critically Endangered Bird and Its Common Congener.” Global Ecology and Conservation 28: e01681. <https://doi.org/10.1016/j.gecco.2021.e01681>.
 
 Forsdick, Natalie J. 2020. “Assessment of the Impacts of Anthropogenic Hybridisation in a Threatened Non-Model Bird Species Through the Development of Genomic Resources with Implications for Conservation.” Thesis, University of Otago. <https://ourarchive.otago.ac.nz/handle/10523/10268>.
 
