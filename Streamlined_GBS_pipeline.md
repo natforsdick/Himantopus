@@ -1,16 +1,8 @@
----
-title: "Streamlined GBS pipeline"
-author: "Natalie J Forsdick"
-date: "05 July, 2021"
-header-includes:
-    - \usepackage{setspace}\doublespacing
-output:
-  pdf_document:
-    keep_md: true
-    highlight: tango
----
+# Streamlined GBS pipeline
 
-The following pipeline was produced as part of work carried out for my PhD thesis (Chapter 3, [Forsdick, 2020](#references)) to conduct analysis of introgression using Genotyping By Sequencing (GBS) data as input. This research has since been published as [Forsdick et al., 2021](#references). I gratefully acknowledge my co-authors Liz Brown, Denise Martini, Hugh Cross, Richard Maloney, Tammy Steeves, and Michael Knapp. 
+### Natalie J Forsdick, 05 July 2021
+
+The following pipeline was produced as part of work carried out for my PhD thesis (Chapter 3, [Forsdick, 2020](#references)) to conduct analysis of introgression between kakī (*Himantopus novaezelandiae*) and pied stilts (*H. himantopus leucocephalus*) using Genotyping By Sequencing (GBS) data as input. This research has since been published as [Forsdick et al., 2021](#references). I gratefully acknowledge my co-authors Liz Brown, Denise Martini, Hugh Cross, Richard Maloney, Tammy Steeves, and Michael Knapp.
 
 This pipeline uses command-line bash commands to take raw GBS data for multiple individuals through analysis of introgression resulting from hybridisation, with additional analysis and visualisation of results with the `Pophelper` package in `R v3.5.1`. The steps included here should be run independently of one another. Variables should be modified according to the project-specific directories and names of input and output files, and available software versions. 
 
