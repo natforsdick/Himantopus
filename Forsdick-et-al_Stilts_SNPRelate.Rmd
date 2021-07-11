@@ -7,7 +7,7 @@ output: pdf_document
 
 # Introduction
 
-This report is supplementary to the manuscript by Forsdick, Martini, Brown, Cross, Maloney, Steeves, Knapp, entitled 'Genomic sequencing confirms absence of introgression despite past hybridisation between a common and a critically endangered bird', the preprint of which is available on BioRxiv at https://doi.org/10.1101/2020.09.28.316299. The original Rmarkdown file used to produce this report is available at https://github.com/natforsdick/Himantopus.
+This report is supplementary to the manuscript by Forsdick, Martini, Brown, Cross, Maloney, Steeves, Knapp, entitled 'Genomic sequencing confirms absence of introgression despite past hybridisation between a critically endangered bird and its common congener', published in _Global Ecology and Conservation_ at https://doi.org/10.1016/j.gecco.2021.e01681. The original Rmarkdown file used to produce this report is available at https://github.com/natforsdick/Himantopus, and the output report is included as Supplementary Material to the publication.
 
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(echo = TRUE,ppi=600,units="in", fig.height=5, fig.width=7)
@@ -330,6 +330,8 @@ snpgdsClose(genofile)
 ```
 
 # Conclusions
+
+The resulting PDF report including results is available as supplementary material to the published article at https://doi.org/10.1016/j.gecco.2021.e01681.
 
 The PCA results appear similar to those of DAPC, where kakī and pied stilts are grouped distinctly from one another, with hybrids falling intermediate to the two. The Fst estimates indicate strong differentiation between kakī and pied stilts. When hybrids are included, the differentiation is still strong but less so, as we would expect. 
 
