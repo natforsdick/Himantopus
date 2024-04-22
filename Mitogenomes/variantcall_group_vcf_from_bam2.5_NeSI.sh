@@ -36,10 +36,7 @@ call="yes"
 
 #below: a list of sample names (in any order) as they were processed by the fastq_pipeline_loop[version].sh
 #these sample names currently should be in double quotes (around all) and separated by whitespace (spaces or tabs)
-#samplist="10AF306"
-samplist="MS10986 MS10987 MS10988 MS10990 MS10991 MS10992 MS10994 \
-#MS10995 MS10996 MS10997 MS10998 MS10999 MS11000 MS11001 MS11002 MS11003 MS11004 \
-#MS11005 MS11006 MS11007 MS11009 MS11010 MS11011"
+samplist="MS10986 MS10987 MS10988 MS10990 MS10991 MS10992 MS10994" 
 
 # First you need to rename all your output files from the previous step to match the MS numbers
 # eg (test with 'echo', then replace with 'mv'): 
