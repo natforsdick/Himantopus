@@ -1,6 +1,6 @@
 chmod a+x variantcall_group_vcf_from_bam2.5_NeSI.sh
 #call VCF files from BAM files produced by fastq_pipeline_loop[version].sh
-#Uses GATK's HaploCaller to call all variants, combine into a group VCF and 
+#Uses GATK's HaploCaller to call all variants, and combine into a group VCF 
 
 # Protocol by Sophia Cameron-Christie, altered by Nat Forsdick for use on NeSI, 3/12/19.
 #variables to change (description below each)
