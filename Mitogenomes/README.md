@@ -1,6 +1,6 @@
 # Mitogenomes
 
-This directory contains scripts for processing mitogenome data of **Himantopus** spp., associated with the draft manuscript 'Population decline and conservation management of the critically endangered kakī/black stilt (Himantopus novaezelandiae) informed by mitochondrial diversity', Forsdick et al., in progress. These script were originally developed by Sophia Cameron-Christie for use by the Matisoo-Smith lab group in the Department of Anatomy, University of Otago.
+This directory contains scripts for processing mitogenome data of *Himantopus spp.*, associated with the draft manuscript 'Population decline and conservation management of the critically endangered kakī/black stilt (*Himantopus novaezelandiae*) informed by mitochondrial diversity', Forsdick et al., in progress. These script were originally developed by Sophia Cameron-Christie for use by the Matisoo-Smith lab group in the Department of Anatomy, University of Otago.
 
 For historic samples, I processed all sequencing data with [fastq_pipeline_loop_historic.sh](Mitogenomes/fastq_pipeline_loop_historic.sh). 
 
